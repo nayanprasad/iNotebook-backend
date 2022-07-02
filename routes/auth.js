@@ -2,6 +2,10 @@ const express = require("express");
 const User = require("../models/User")
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
+const bycrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
+
+const jwt_SECRETE = "IteMeHedes";
 
 router.get("/auth", (req, res) => {
   res.send("auth");
@@ -25,21 +29,76 @@ router.post("/createuser",
       if(user){
         return res.status(400).json({error : "email already exits"})
       }
+
+      const salt = await bycrypt.genSalt(10);
+      const hash_paswd = await bycrypt.hash(req.body.password, salt);
+
       user = await User.create({
         name: req.body.name,
-        password: req.body.password,
+        password: hash_paswd,
         email : req.body.email
       })
-      res.json(user);
+
+      const data = {
+        user : {
+          id : user.id
+        }
+      }
+
+      const authtocken =  jwt.sign(data, jwt_SECRETE);
+
+         // res.json(user);
+         res.json({authtocken});
       
     }catch(error){
       console.error(error.message);
       res.status(500).send("something went wrong");
     }
-    
-
     // console.log(req.body);
+});
+
+
+router.post("/login",[
+  body('email', "invalid mail").isEmail(),
+  body('password', "invalid password").exists()],
+  async (req, res) => {
+
+    const errors = validationResult(req);
+
+    if(!errors.isEmpty()){
+      return res.status(400).json({errors : errors.array()});
+    }
+
+    try {
+
+      const {email, password} = req.body;
+
+      let user = await User.findOne({email});
+      if(!user){
+        return res.status(400).json({error: "Please try to login with correct credentials"}); 
+      }
+
+      const password_compared = await bycrypt.compare(password, user.password);
+      if(!password_compared){
+        return res.status(400).json({error: "Please try to login with correct credentials"});
+      }
+
+      const data = {
+        user : {
+          id : user.id
+        }
+      }
+      const authtocken = await jwt.sign(data, jwt_SECRETE);
+
+      res.json({authtocken});
+      
+    } catch (error) {
+      console.error(error.message);
+      res.status(500).send("something went wrong");
+    }
+
 
 })
+
 
 module.exports = router;
