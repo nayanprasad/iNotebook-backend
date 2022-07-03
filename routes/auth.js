@@ -4,6 +4,7 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const bycrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const getUser = require("../middleware/getUser")
 
 const jwt_SECRETE = "IteMeHedes";
 
@@ -45,10 +46,10 @@ router.post("/createuser",
         }
       }
 
-      const authtocken =  jwt.sign(data, jwt_SECRETE);
+      const authtoken =  jwt.sign(data, jwt_SECRETE);
 
          // res.json(user);
-         res.json({authtocken});
+         res.json({authtoken});
       
     }catch(error){
       console.error(error.message);
@@ -88,17 +89,33 @@ router.post("/login",[
           id : user.id
         }
       }
-      const authtocken = await jwt.sign(data, jwt_SECRETE);
+      const authtoken = await jwt.sign(data, jwt_SECRETE);
 
-      res.json({authtocken});
+      res.json({authtoken});
       
     } catch (error) {
       console.error(error.message);
       res.status(500).send("something went wrong");
     }
 
+});
 
-})
+
+
+router.post("/getuser", getUser, async (req, res) => {
+  try {
+
+     userId = req.user.id;
+    //  console.log(userId);
+    //  console.log(typeof(userId))
+    const user = await User.findOne({_id : userId}).select("-password");
+    res.send(user);
+    
+  } catch (error) {
+    console.error(error.message);
+    res.status(500).send("something went wrong");
+  }
+});
 
 
 module.exports = router;

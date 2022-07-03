@@ -9,7 +9,7 @@ app.use(express.json()); // to use req.body
 
 // Routes
 app.use("/auth", require("./routes/auth"));
-app.use("/", require("./routes/notes"));
+app.use("/notes", require("./routes/notes"));
 
 
 const PORT = 5000;
