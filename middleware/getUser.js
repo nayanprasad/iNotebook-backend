@@ -15,7 +15,7 @@ const fetchUser = async (req, res, next) => {
     req.user = data.user;
     next();
   } catch (error) {
-    res.status(401).send("enter a valid token - in cath");
+    res.status(401).send("enter a valid token - in cath getUser.js");
   }
 }
 
